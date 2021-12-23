@@ -1,18 +1,37 @@
-import * as React from 'react';
+import React, {
+  useCallback, useEffect
+} from 'react';
 
-import { StyleSheet, View, Text } from 'react-native';
-import { multiply } from 'react-native-esp-touch';
+import {StyleSheet, View, Text, Button} from 'react-native';
+import { useESPTouch } from 'react-native-esp-touch';
 
 export default function App() {
-  const [result, setResult] = React.useState<number | undefined>();
+  const { isProvisioning, startProvisioning, stopProvisioning, result } = useESPTouch({
+    ssid: "ssid",
+    bssid: "bssid",
+    password: "password",
+    count: 2
+  })
 
-  React.useEffect(() => {
-    multiply(3, 7).then(setResult);
+  useEffect(() => {
+    console.log('isProvisioning', isProvisioning)
+  }, [isProvisioning]);
+
+
+  const start = useCallback(() => {
+    startProvisioning();
+  }, []);
+
+  const stop = useCallback(() => {
+    stopProvisioning();
   }, []);
 
   return (
     <View style={styles.container}>
-      <Text>Result: {result}</Text>
+      <Text>isProvisioning: {JSON.stringify(isProvisioning)}</Text>
+      <Text>Result: {JSON.stringify(result)}</Text>
+      <Button title="start" onPress={start}>Start</Button>
+      <Button title="stop" onPress={stop}>Stop</Button>
     </View>
   );
 }
