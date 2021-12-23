@@ -58,7 +58,6 @@ RCT_REMAP_METHOD(stopProvisioning,
                  withRejecter:(RCTPromiseRejectBlock)reject)
 {
     if (self.task != nil) {
-        NSLog(@"interrupting");
         [self.task interrupt];
         running = false;
     }

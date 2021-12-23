@@ -28,14 +28,14 @@ interface ProvisioningConfig {
 
 const eventEmitter = new NativeEventEmitter(EspTouch);
 
-export function useESPTouch({ ssid, bssid, password, count = 1 }: ProvisioningConfig) {
+export function useESPTouch({ ssid, bssid, password, count = 1, onDeviceProvisioned }: ProvisioningConfig) {
   const [result, setResult] = useState();
   const [error, setError] = useState<any>();
   const [isProvisioning, setIsProvisioning] = useState(false);
   const subscriptionRef = useRef<any>(null);
 
-  const onDeviceProvisioned = (event: any) => {
-    console.log("received", event);
+  const onDeviceProvisionedEventReceived = (event: any) => {
+    onDeviceProvisioned?.(event);
   }
 
   const start = async () => {
@@ -67,13 +67,11 @@ export function useESPTouch({ ssid, bssid, password, count = 1 }: ProvisioningCo
 
     if (!isProvisioning) {
       if (subscriptionRef.current) {
-        console.log('stopping')
         stop();
         subscriptionRef.current?.remove();
       }
     }
-    subscriptionRef.current = eventEmitter.addListener('onDeviceProvisioned', onDeviceProvisioned);
-    // return () => { subscriptionRef.current?.remove(); };
+    subscriptionRef.current = eventEmitter.addListener('onDeviceProvisioned', onDeviceProvisionedEventReceived);
   }, [isProvisioning, ssid, bssid, password, count]);
 
 
