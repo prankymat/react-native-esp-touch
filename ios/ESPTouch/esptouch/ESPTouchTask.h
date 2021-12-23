@@ -13,7 +13,7 @@
 
 #define ESPTOUCH_VERSION    @"SDK-v1.1.0"
 
-#define DEBUG_ON   YES
+#define DEBUG_ON   NO
 
 @interface ESPTouchTask : NSObject
 
