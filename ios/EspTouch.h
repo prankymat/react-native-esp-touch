@@ -4,4 +4,7 @@
 
 @interface EspTouch : NSObject <RCTBridgeModule, ESPTouchDelegate>
 
+@property (atomic, strong) ESPTouchTask *task;
+@property (atomic, strong) NSCondition *lock;
+
 @end

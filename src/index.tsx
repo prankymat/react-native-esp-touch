@@ -36,15 +36,8 @@ export function useESPTouch({ ssid, bssid, password, count = 1 }: ProvisioningCo
     error,
     isProvisioning,
     startProvisioning: async () => {
-      if (isProvisioning) {
-        console.warn('Warning: ESP Touch provisioning has already started. Ignoring start request.')
-        return;
-      }
-
       setIsProvisioning(true);
       setResult(undefined);
-
-      console.log('starting');
 
       try {
         const result = await EspTouch.startProvisioning(ssid, bssid, password, count)

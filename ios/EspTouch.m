@@ -2,8 +2,13 @@
 
 @implementation EspTouch
 
-ESPTouchTask *task;
-bool running;
+bool running = false;
+
+-(id) init {
+    self = [super init];
+    self.lock = [[NSCondition alloc]init];
+    return self;
+}
 
 RCT_EXPORT_MODULE()
 
@@ -12,44 +17,48 @@ RCT_REMAP_METHOD(startProvisioning,
                  withResolver:(RCTPromiseResolveBlock)resolve
                  withRejecter:(RCTPromiseRejectBlock)reject)
 {
+    NSLog(@"%d", count);
+    [self.lock lock];
     if (running) {
         return;
     }
-    running = true;
-    dispatch_queue_t  queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
     dispatch_async(queue, ^{
-        task = [[ESPTouchTask alloc] initWithApSsid:ssid andApBssid:bssid andApPwd:password];
-        [task setEsptouchDelegate:self]; // Set result callback
-        [task setPackageBroadcast:YES]; // if YES send broadcast packets, else send multicast packets
-        
-        NSArray* results = [task executeForResults:count];
+        self.task = [[ESPTouchTask alloc] initWithApSsid:ssid andApBssid:bssid andApPwd:password];
+        [self.task setEsptouchDelegate:self]; // Set result callback
+        [self.task setPackageBroadcast:YES]; // if YES send broadcast packets, else send multicast packets
+
+        running = true;
+        NSArray* results = [self.task executeForResults:count];
+        running = false;
 
         dispatch_async(dispatch_get_main_queue(), ^{
             ESPTouchResult *firstResult = [results objectAtIndex:0];
-            if ([firstResult isSuc]) {
+            if (firstResult != nil && [firstResult isSuc]) {
                 NSDictionary *res = @{
-                    @"success": true,
+                    @"success": @true,
                     @"bassid": firstResult.bssid
                 };
                 resolve(res);
             } else {
-                reject(@"failed to provision devices");
+                reject(@"error", @"failed to provision devices", nil);
             }
-            
-            running = false;
         });
     });
+    [self.lock unlock];
 }
 
 RCT_REMAP_METHOD(stopProvisioning,
                  withResolver:(RCTPromiseResolveBlock)resolve
                  withRejecter:(RCTPromiseRejectBlock)reject)
 {
-    if (task) {
+    [self.lock lock];
+    if (self.task != nil) {
         NSLog(@"interrupting");
-        [task interrupt];
+        [self.task interrupt];
         running = false;
     }
+    [self.lock unlock];
 }
 
 -(void) onEsptouchResultAddedWithResult: (ESPTouchResult *) result {
