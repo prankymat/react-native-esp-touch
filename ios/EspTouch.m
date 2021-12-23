@@ -3,11 +3,18 @@
 @implementation EspTouch
 
 bool running = false;
+bool hasListeners = false;
 
--(id) init {
-    self = [super init];
-    self.lock = [[NSCondition alloc]init];
-    return self;
+-(NSArray<NSString *> *)supportedEvents {
+    return @[@"onDeviceProvisioned"];
+}
+
+-(void) startObserving {
+    hasListeners = true;
+}
+
+-(void) stopObserving {
+    hasListeners = false;
 }
 
 RCT_EXPORT_MODULE()
@@ -17,8 +24,6 @@ RCT_REMAP_METHOD(startProvisioning,
                  withResolver:(RCTPromiseResolveBlock)resolve
                  withRejecter:(RCTPromiseRejectBlock)reject)
 {
-    NSLog(@"%d", count);
-    [self.lock lock];
     if (running) {
         return;
     }
@@ -45,29 +50,24 @@ RCT_REMAP_METHOD(startProvisioning,
             }
         });
     });
-    [self.lock unlock];
+
 }
 
 RCT_REMAP_METHOD(stopProvisioning,
                  withResolver:(RCTPromiseResolveBlock)resolve
                  withRejecter:(RCTPromiseRejectBlock)reject)
 {
-    [self.lock lock];
     if (self.task != nil) {
         NSLog(@"interrupting");
         [self.task interrupt];
         running = false;
     }
-    [self.lock unlock];
 }
 
 -(void) onEsptouchResultAddedWithResult: (ESPTouchResult *) result {
-//    NSLog(@"welp %p", _resolveBlock);
-//    if (_resolveBlock) {
-//        _resolveBlock(@{
-//            @"test": @"value"
-//        });
-//    }
+    if (running && hasListeners) {
+        [self sendEventWithName:@"onDeviceProvisioned" body:@{@"bssid": result.bssid}];
+    }
 }
 
 @end
